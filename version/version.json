@@ -1,5 +1,7 @@
 {
     "version": "1.0",
-    "url": "https://raw.githubusercontent.com/anhpham9/company_cleaner-tool/master/version/1.0/CompanyCleaner.exe",
-    "note": "初回リリース"
+    "url": "https://github.com/anhpham9/company_cleaner-tool/releases/download/v1.0/CompanyCleaner.exe",
+    "note": "初回リリース",
+    "sha256": "ccdec2e4c822c40dd55bba10cc5113821a2089832ad60cb7a31b6fd72b80f0af",
+    "size": "45.9 MB"
 }
