@@ -2,11 +2,11 @@ import customtkinter as ctk
 from tkinter import filedialog, messagebox
 from tkinterdnd2 import DND_FILES, TkinterDnD
 
-from updater import check_update, download_update, apply_update
 import tempfile
 import os
 
 
+from updater import check_update, download_update, apply_update, verify_file
 from processor import process_file
 from logger import log_action
 
@@ -104,6 +104,26 @@ class App(TkinterDnD.Tk):
             if result:
                 self.perform_update(data)
 
+    
+    def perform_update(self, data):
+        try:
+            self.status.configure(text="アップデート中...")
+            self.update_idletasks()
+
+            temp_path = tempfile.gettempdir() + "\\new_app.exe"
+
+            # ✅ download
+            download_update(data["url"], temp_path)
+
+            # ✅ check hash
+            if not verify_file(temp_path, data["sha256"]):
+                raise Exception("ファイル検証に失敗しました")
+
+            # ✅ apply
+            apply_update(temp_path)
+
+        except Exception as e:
+            messagebox.showerror("エラー", str(e))
 
     # ===== File select =====
     def select_file(self):

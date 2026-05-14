@@ -2,8 +2,19 @@ import requests
 import os
 import subprocess
 import sys
+import hashlib
+
 
 CURRENT_VERSION = "1.0"
+
+def verify_file(path, expected_hash):
+    sha256 = hashlib.sha256()
+
+    with open(path, "rb") as f:
+        for chunk in iter(lambda: f.read(4096), b""):
+            sha256.update(chunk)
+
+    return sha256.hexdigest() == expected_hash
 
 def check_update():
     try:

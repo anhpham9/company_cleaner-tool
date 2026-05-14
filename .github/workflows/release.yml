@@ -1,0 +1,92 @@
+name: Build & Release
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      # ===== checkout =====
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      # ===== setup python =====
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      # ===== install packages =====
+      - name: Install dependencies
+        run: |
+          pip install pandas openpyxl customtkinter pyinstaller tkinterdnd2 requests
+
+      # ===== build exe =====
+      - name: Build exe
+        run: |
+          pyinstaller --onefile --noconsole main.py
+
+      # ===== rename exe =====
+      - name: Rename exe
+        shell: pwsh
+        run: |
+          Rename-Item dist/main.exe CompanyCleaner.exe
+
+      # ===== read version =====
+      - name: Read version
+        shell: pwsh
+        run: |
+          $version = python -c "import json; print(json.load(open('version/version.json'))['version'])"
+          echo "VERSION=$version" >> $env:GITHUB_ENV
+
+      # ===== generate metadata =====
+      - name: Generate SHA256 and size
+        run: |
+          python generate_metadata.py
+
+      # ===== update download url =====
+      - name: Update version.json URL
+        shell: pwsh
+        run: |
+          python -c "
+            import json
+
+            file = 'version/version.json'
+
+            with open(file, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+
+            data['url'] = f'https://github.com/anhpham9/company_cleaner-tool/releases/download/v{data[\"version\"]}/CompanyCleaner.exe'
+
+            with open(file, 'w', encoding='utf-8') as f:
+                json.dump(data, f, ensure_ascii=False, indent=2)
+          "
+
+      # ===== commit version.json =====
+      - name: Commit version.json
+        shell: pwsh
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+
+          git add version/version.json
+
+          git commit -m "update version metadata" `
+          || echo "No changes"
+
+          git push
+
+      # ===== create github release =====
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v${{ env.VERSION }}
+          name: CompanyCleaner v${{ env.VERSION }}
+          files: dist/CompanyCleaner.exe
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
