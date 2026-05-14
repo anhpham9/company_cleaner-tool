@@ -150,8 +150,8 @@ blacklist.xlsx が存在しない場合
 ### ビルド方法
 
 ```bash
-pip install pyinstaller customtkinter pandas openpyxl requests
-pyinstaller --onefile --noconsole --clean main.py --icon=assets/icon.ico
+pip install pyinstaller customtkinter tkinterdnd2 pandas openpyxl requests
+pyinstaller --onefile --noconsole --clean --icon=assets/icon.ico main.py
 ```
 
 ---
