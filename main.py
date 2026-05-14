@@ -1,2 +1,5 @@
-from ui import runfrom uiif __name__ == "__main__":
+
+from ui import run
+
+if __name__ == "__main__":
     run()
