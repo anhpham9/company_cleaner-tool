@@ -1,223 +1,373 @@
 # 企業リストクリーナー (Company Cleaner)
 
-社内向けに開発されたツールで、Excelの企業リストを整理・クリーニングします。
-
-![CompanyCleaner](image-2.png)
-
----
-
-## 📌 機能概要
-
-本ツールは以下の処理を自動で実行します：
-
-- ✅ 会社名の正規化
-  - `/xxxx` の削除  
-  - 全角 → 半角変換（ＡＢＣ → ABC）  
-  - 不要なスペース削除  
-
-- ✅ 重複企業の削除（会社名ベース）
-
-- ✅ ブラックリストチェック
-  - 指定ファイルと照合して除外
-
-- ✅ Excelフォーマット維持
-  - 列幅
-  - 色
-  - レイアウト
-
-- ✅ ログ出力
-  - 削除されたデータ一覧
+Excelの企業リストを整理・クリーニングする社内向けツールです。  
+Đây là công cụ nội bộ dùng để làm sạch và xử lý danh sách công ty trong Excel.
 
 ---
 
-## 🖥️ 使い方
+## 📸 Demo
 
+![CompanyCleaner](docs/assets/ui.png)
 
-### ブラックリストチェック
+---
 
-**過去に連絡NG・対応不要と判断された企業を自動で除外するための機能**です。
+# 📌 主な機能 / Tính năng chính
 
-#### 主な目的：
+本ツールでは、以下の処理を自動で実行します。  
+Công cụ tự động thực hiện các chức năng sau.
 
-- ❌ 重複アプローチの防止
-- ❌ 既に断られた企業への再連絡を防ぐ
-- ✅ 業務効率の向上
-- ✅ 不要データの削減
+---
 
-**ブラックリストファイルは以下の場所に配置してください：**
+## ✅ 会社名の正規化 / Chuẩn hóa tên công ty
 
-`CompanyCleaner.exe` と同じフォルダ
+- `/xxxx` の削除  
+  → Xóa phần `/xxxx`
+
+- 全角 → 半角変換（ＡＢＣ → ABC）  
+  → Chuyển ký tự full-width sang half-width
+
+- 不要なスペース削除  
+  → Xóa khoảng trắng dư
+
+---
+
+## ✅ 重複企業の削除 / Xóa công ty trùng lặp
+
+- 会社名ベースで重複を判定  
+  → Xóa dữ liệu trùng dựa trên tên công ty
+
+---
+
+## ✅ ブラックリストチェック / Kiểm tra blacklist
+
+- blacklist.xlsx と照合して除外  
+  → So sánh với file blacklist và loại bỏ khỏi danh sách
+
+- 過去に対応不要と判断された企業を自動除外  
+  → Tự động loại bỏ những công ty không cần xử lý
+
+---
+
+## ✅ Excelフォーマット維持 / Giữ nguyên định dạng Excel
+
+以下の情報を保持します。  
+Giữ nguyên các định dạng của file Excel.
+
+- 列幅 / Độ rộng cột
+- 色 / Màu sắc
+- レイアウト / Layout
+
+---
+
+## ✅ ログ出力 / Xuất log
+
+削除されたデータを理由付きで出力します。  
+Xuất danh sách dữ liệu bị xóa kèm lý do.
+
+---
+
+## ✅ 出力ファイルを直接オープン / Mở trực tiếp file kết quả
+
+処理完了後、表示されたパスをクリックするとExcelファイルを直接開けます。  
+Sau khi xử lý xong, có thể click vào đường dẫn để mở trực tiếp file Excel.
+
+---
+
+# 📋 準備 / Chuẩn bị
+
+## 📄 ブラックリスト設定 / Thiết lập blacklist
+
+### 📌 目的 / Mục đích
+
+以下の企業を自動除外するために使用します。  
+Dùng để tự động loại bỏ các công ty không cần xử lý.
+
+- 重複アプローチ防止  
+  → Tránh liên hệ trùng
+
+- 過去に断られた企業への再連絡防止  
+  → Tránh liên hệ lại công ty đã từ chối
+
+- 不要データ削減  
+  → Giảm dữ liệu không cần thiết
+
+---
+
+### 📂 配置場所 / Vị trí file
+
+`blacklist.xlsx` を `CompanyCleaner.exe` と同じフォルダに配置してください。  
+Đặt file `blacklist.xlsx` cùng thư mục với `CompanyCleaner.exe`.
 
 例：
-```
+
+```txt
 CompanyCleaner/
  ├── CompanyCleaner.exe
  ├── blacklist.xlsx
-```
+````
 
-#### 📄 ファイル名
+---
 
-以下のファイル名を使用してください：
-```
+### 📄 ファイル名 / Tên file
+
+固定ファイル名：
+
+```txt
 blacklist.xlsx
 ```
-⚠️ ファイル名が異なると認識されません
 
-#### 📋 ファイル内容フォーマット
+⚠️ ファイル名が異なる場合、認識されません。
 
-必須列：
-
-|列名|
-|--|
-|会社名|
-
-✅ 例：
-
-|会社名|
-|--|
-|株式会社ABC|
-|株式会社サンプル|
-|ABC株式会社|
-
-#### 📌 ブラックリスト未設定時
-
-blacklist.xlsx が存在しない場合
-
-→ チェックはスキップされます（通常動作）
+⚠️ Nếu tên file khác, chương trình sẽ không nhận diện được.
 
 ---
 
-### 方法①：ドラッグ＆ドロップ
-1. アプリ起動  (`.exe` ファイルを開く)
-2. Excelファイルを画面にドラッグ  
-3. 自動処理完了
+### 📋 必須列 / Cột bắt buộc
+
+| 列名  |
+| --- |
+| 会社名 |
+
+例：
+
+| 会社名      |
+| -------- |
+| 株式会社ABC  |
+| 株式会社サンプル |
+| ABC株式会社  |
 
 ---
 
-### 方法②：ボタン操作
-1. アプリ起動  (`.exe` ファイルを開く)
-2. 「ファイル選択」クリック  
+### 📌 blacklist.xlsx が存在しない場合
+
+ブラックリストチェックはスキップされます。
+
+Nếu không tồn tại `blacklist.xlsx`, chương trình sẽ bỏ qua bước kiểm tra blacklist.
+
+---
+
+# 🖥️ 使い方 / Cách sử dụng
+
+## 方法①：ドラッグ＆ドロップ / Kéo & thả
+
+1. アプリを起動
+   → Mở ứng dụng (.exe)
+
+2. Excelファイルを画面へドラッグ
+   → Kéo file Excel vào ứng dụng
+
+3. 自動処理
+   → Tự động xử lý
+
+---
+
+## 方法②：ファイル選択 / Chọn file
+
+1. アプリを起動
+   → Mở ứng dụng (.exe)
+
+2. 「ファイル選択」をクリック
+   → Nhấn nút chọn file
+
 3. Excelファイルを選択
-4. 自動処理完了
+   → Chọn file Excel cần xử lý
+
+4. 自動処理
+   → Tự động xử lý
 
 ---
 
-## 📂 出力ファイル
+# 📋 入力ファイル仕様 / Quy định file đầu vào
 
-元ファイルと同じフォルダに以下が生成されます：
+## 必須列 / Cột bắt buộc
 
-| ファイル | 内容 |
-|--------|------|
-| `*_cleaned.xlsx` | 重複削除済み |
-| `*_log.xlsx` | 削除されたデータ |
+| 列名  |
+| --- |
+| 会社名 |
 
----
+その他の列は自由です。
 
-## 📋 入力ファイル仕様
-
-- 必須列：
-  - `会社名`
-
-- その他の列は自由（そのまま保持されます）
+Những cột khác có thể tùy ý và sẽ được giữ nguyên.
 
 ---
 
-## ⚠️ 注意事項
+# 📂 出力ファイル / File kết quả
 
-- 初回起動時にWindowsの警告が表示される場合があります  
-  → 「詳細情報」→「実行」を選択してください  
+元ファイルと同じフォルダに以下のファイルが生成されます。
 
-- Excelファイルは `.xlsx` のみ対応
+Các file sau sẽ được tạo trong cùng thư mục với file gốc.
 
-![Windowsの警告](image.png)
+| ファイル             | 内容                      |
+| ---------------- | ----------------------- |
+| `*_cleaned.xlsx` | 処理済みデータ / File đã xử lý |
+| `*_log.xlsx`     | 削除ログ / File log         |
 
-![詳細情報](image-1.png)
+処理完了後、表示されたパスをクリックすると直接ファイルを開けます。
 
----
-
-## 🛠️ 技術情報
-
-- Python
-- pandas
-- openpyxl
-- CustomTkinter
-- PyInstaller
+Sau khi xử lý xong, có thể click vào đường dẫn để mở trực tiếp file.
 
 ---
 
-## 🔄 バージョン管理
+# ⚠️ 注意事項 / Lưu ý
 
-アプリは自動更新機能を備えています（開発中）  
+* `.xlsx` ファイルのみ対応
+  → Chỉ hỗ trợ file `.xlsx`
+
+* 初回起動時にWindows警告が表示される場合があります
+
+  → Có thể xuất hiện cảnh báo Windows khi chạy lần đầu
+
+「詳細情報」→「実行」を選択してください。
+
+Hãy chọn “More info” → “Run anyway”.
+
+![Windowsの警告](docs/assets/warning.png)
+
+![詳細情報](docs/assets/click-detail.png)
 
 ---
 
-## 👨‍💻 開発者向け
+# 🔄 自動アップデート / Tự động cập nhật
 
-### ビルド方法
+本ツールは自動アップデートに対応しています。
+Công cụ hỗ trợ tự động cập nhật phiên bản.
+
+* 最新バージョン確認
+  → Kiểm tra phiên bản mới
+
+* 新バージョンダウンロード
+  → Tải phiên bản mới
+
+* SHA256ハッシュ検証
+  → Kiểm tra hash SHA256 để đảm bảo an toàn
+
+* 自動更新
+  → Tự động cập nhật ứng dụng
+
+※ インターネット接続が必要です。
+
+※ Cần có kết nối internet.
+
+---
+
+# 🛠️ 技術情報 / Tech Stack
+
+* Python
+* pandas
+* openpyxl
+* CustomTkinter
+* PyInstaller
+
+---
+
+# 👨‍💻 開発者向け / Dành cho Developer
+
+## ⚙️ ビルド方法 / Build
 
 ```bash
 pip install pyinstaller customtkinter tkinterdnd2 pandas openpyxl requests
-pyinstaller --onefile --noconsole --clean --icon=assets/icon.ico main.py --version-file version.txt
+
+pyinstaller --onefile --noconsole --clean ^
+  --icon=assets/icon.ico ^
+  main.py ^
+  --version-file version.txt
 ```
 
 ---
 
-### 📌 今後の拡張予定
+## 🔄 バージョン更新 / Update version
 
-- ブラックリストUI設定
-- 多言語対応
-- 自動アップデート強化
-- UI改善（ダークモード）
+### Minor Update（例：1.1 → 1.2）
 
+```bash
+python bump_version.py --note "アイコン変更"
+
+git add .
+git commit -m "release 1.2"
+git push
+```
 
 ---
 
-### 📞 サポート
+### Major Update（例：2.6 → 3.0）
 
-不具合・改善要望があれば連絡してください。
+```bash
+python bump_version.py --major --note "大幅アップデート"
+
+git add .
+git commit -m "release 3.0"
+git push
+```
 
 ---
 
-### 🎯 FLOW 
+### version のみ更新（noteなし）
 
-```
-# if ver 1.1, 1.4, 2.8,... Tăng minor
-1. py bump_version.py --note "アイコン変更"
+```bash
+python bump_version.py
 
-# Tăng major if current version 2.6 -> update to version 3.0
-1. py bump_version.py --major --note "大幅アップデート"
-
-# Không dùng note chỉ tăng minor
-1. py bump_version.py
-2. git add .
-3. git commit -m "release 2.1"
-4. git push
-
-# if ver 1.0, 2.0, 3.0
-1. update version and note in version/version.json
-1. git add .
-2. git commit -m "release 2.0"
-3. git push
+git add .
+git commit -m "release x.x"
+git push
 ```
 
-GitHub sẽ:
+---
 
-```
-→ detect change version.json
-→ build exe
-→ create release
-→ upload exe
-→ generate hash + size
-→ update version.json
-→ commit lại
+## 🚀 GitHub Actions
+
+```txt
+→ version.json 更新検知
+→ exe ビルド
+→ GitHub Release 作成
+→ exe アップロード
+→ SHA256 / size 生成
+→ version.json 更新
+→ 自動コミット
 ```
 
-App user sẽ:
+---
 
+## 📲 自動アップデート処理
+
+```txt
+→ version.json チェック
+→ 新バージョン検知
+→ exe ダウンロード
+→ SHA256 検証
+→ 自動アップデート
 ```
-→ check version.json
-→ thấy version mới
-→ download exe
-→ verify hash
-→ update
-```
+
+---
+
+# 🤝 Contributing
+
+Issues / Pull Requests welcome.
+
+---
+
+# 📄 License
+
+Internal / Private use
+
+---
+
+# 📦 Download
+
+https://github.com/anhpham9/company_cleaner-tool/releases/latest
+
+---
+
+# 📌 今後の予定 / Future Plans
+
+* [ ] ブラックリストUI設定
+* [ ] 多言語対応
+* [x] 自動アップデート改善
+* [ ] ダークモード対応
+
+---
+
+# 📞 サポート / Support
+
+不具合や改善要望があれば連絡してください。
+
+Nếu có lỗi hoặc yêu cầu cải thiện, vui lòng liên hệ.

@@ -167,12 +167,44 @@ class App(TkinterDnD.Tk):
 
             self.progress.set(1)
 
+            # self.status.configure(
+            #     text=(
+            #         f"✅ 完了：{result['removed']}件削除 / 残り{result['remain']}件\n"
+            #         f"📄 {result['output_file']}\n"
+            #         f"📄 {result['log_file']}\n"
+            #     )
+            # )
+
             self.status.configure(
-                text=(
-                    f"✅ 完了：{result['removed']}件削除 / 残り{result['remain']}件\n"
-                    f"📄 {result['output_file']}\n"
-                    f"📄 {result['log_file']}\n"
-                )
+                text=f"✅ 完了：{result['removed']}件削除 / 残り{result['remain']}件"
+            )
+
+            # ===== file cleaned =====
+            self.output_label = ctk.CTkLabel(
+                self,
+                text=f"📄 {result['output_file']}",
+                text_color="blue",
+                cursor="hand2"
+            )
+            self.output_label.pack()
+
+            self.output_label.bind(
+                "<Button-1>",
+                lambda e, p=result['output_file']: self.open_file(p)
+            )
+
+            # ===== file log =====
+            self.log_label = ctk.CTkLabel(
+                self,
+                text=f"📄 {result['log_file']}",
+                text_color="blue",
+                cursor="hand2"
+            )
+            self.log_label.pack()
+
+            self.log_label.bind(
+                "<Button-1>",
+                lambda e, p=result['log_file']: self.open_file(p)
             )
 
             log_action(f"Processed {file_path}")
@@ -180,6 +212,22 @@ class App(TkinterDnD.Tk):
         except Exception as e:
             messagebox.showerror("エラー", str(e))
             self.progress.set(0)
+
+    # ==== Open file with default app =====
+    def open_file(self, path):
+        try:
+            # ✅ kiểm tra file tồn tại
+            if not os.path.exists(path):
+                messagebox.showerror("エラー", "ファイルが存在しません")
+                return
+
+            # ✅ mở file bằng app mặc định (Excel, Notepad...)
+            os.startfile(path)
+
+        except Exception as e:
+            messagebox.showerror("エラー", str(e))
+
+
 
 
 def run():
