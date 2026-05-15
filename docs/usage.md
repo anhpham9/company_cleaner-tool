@@ -47,3 +47,32 @@
   - `_log.xlsx`
 
 ---
+
+## ⚠️ 注意事項 / Lưu ý
+
+* `.xlsx` ファイルのみ対応
+  → Chỉ hỗ trợ file `.xlsx`
+
+* 初回起動時にWindows警告が表示される場合があります
+
+  → Có thể xuất hiện cảnh báo Windows khi chạy lần đầu
+
+「詳細情報」→「実行」を選択してください。
+
+Hãy chọn “More info” → “Run anyway”.
+
+![Windowsの警告](assets/warning.png)
+
+![詳細情報](assets/click-detail.png)
+
+---
+
+## 🚀 概要
+
+[About App](../README.md) を参照してください。
+
+---
+
+## 🔧 開発者向け
+
+[Developer Guide](dev.md) を参照してください。

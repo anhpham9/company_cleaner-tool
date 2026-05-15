@@ -98,3 +98,15 @@ https://github.com/anhpham9/company_cleaner-tool/releases/latest
 * [ ] 多言語対応
 * [x] 自動アップデート改善
 * [ ] ダークモード対応
+
+---
+
+## 🚀 概要
+
+[About App](../README.md) を参照してください。
+
+---
+
+## 🖥️ 使用方法
+
+[Usage Guide](usage.md) を参照してください。

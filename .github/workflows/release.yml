@@ -20,7 +20,7 @@ jobs:
         with:
           python-version: "3.11"
 
-      - run: pip install pandas openpyxl customtkinter pyinstaller tkinterdnd2 requests
+      - run: pip install pandas openpyxl customtkinter pyinstaller tkinterdnd2 requests pillow
       
       # ===== inject version into app =====
       - name: Inject version into app
