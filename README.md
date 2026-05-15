@@ -175,15 +175,22 @@ pyinstaller --onefile --noconsole --clean --icon=assets/icon.ico main.py --versi
 ### 🎯 FLOW 
 
 ```
-# if ver 1.1, 1.4, 2.8,...
+# if ver 1.1, 1.4, 2.8,... Tăng minor
+1. py bump_version.py --note "アイコン変更"
+
+# Tăng major if current version 2.6 -> update to version 3.0
+1. py bump_version.py --major --note "大幅アップデート"
+
+# Không dùng note chỉ tăng minor
 1. py bump_version.py
 2. git add .
 3. git commit -m "release 2.1"
 4. git push
 
 # if ver 1.0, 2.0, 3.0
+1. update version and note in version/version.json
 1. git add .
-2. git commit -m "release 2.1"
+2. git commit -m "release 2.0"
 3. git push
 ```
 
