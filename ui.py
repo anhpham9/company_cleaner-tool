@@ -4,7 +4,7 @@ from tkinterdnd2 import DND_FILES, TkinterDnD
 
 import tempfile
 import os
-
+import threading
 
 from updater import check_update, download_update, apply_update, verify_file
 from processor import process_file
@@ -18,6 +18,8 @@ ctk.set_default_color_theme("blue")
 class App(TkinterDnD.Tk):
     def __init__(self):
         super().__init__()
+
+        self.is_updating = False
 
         self.after(1000, self.check_update_ui)
 
@@ -69,16 +71,16 @@ class App(TkinterDnD.Tk):
         )
         self.drop_label.place(relx=0.5, rely=0.5, anchor="center")
 
-        # ✅ Enable Drag
+        # Drag & Drop
         self.drop_area.drop_target_register(DND_FILES)
         self.drop_area.dnd_bind("<<Drop>>", self.drop_file)
-
         self.drop_area.dnd_bind("<Enter>", self.on_drag_enter)
         self.drop_area.dnd_bind("<Leave>", self.on_drag_leave)
 
         # ===== Progress =====
         self.progress = ctk.CTkProgressBar(self, width=400)
         self.progress.pack(pady=10)
+        self.progress.set(0)
 
         # ===== Status =====
         self.status = ctk.CTkLabel(
@@ -89,7 +91,20 @@ class App(TkinterDnD.Tk):
         )
         self.status.pack(pady=5)
 
-    # ===== Update check on start =====
+    # =========================
+    # 🔒 UI ENABLE / DISABLE
+    # =========================
+    def set_ui_state(self, enable: bool):
+        if enable:
+            self.btn.configure(state="normal")
+            self.drop_area.drop_target_register(DND_FILES)
+        else:
+            self.btn.configure(state="disabled")
+            self.drop_area.drop_target_unregister()
+
+    # =========================
+    # 🔄 CHECK UPDATE
+    # =========================
     def check_update_ui(self):
         has_update, data = check_update()
 
@@ -105,81 +120,131 @@ class App(TkinterDnD.Tk):
             if result:
                 self.perform_update(data)
 
-    
+    # =========================
+    # 🚀 START UPDATE
+    # =========================
     def perform_update(self, data):
+        self.is_updating = True
+        self.set_ui_state(False)
+
+        thread = threading.Thread(
+            target=self.download_and_update,
+            args=(data,),
+            daemon=True
+        )
+        thread.start()
+
+    # =========================
+    # 📥 DOWNLOAD + INSTALL
+    # =========================
+    def download_and_update(self, data):
         try:
-            self.status.configure(text="アップデート中...")
-            self.update_idletasks()
+            temp_path = os.path.join(tempfile.gettempdir(), "new_app.exe")
 
-            temp_path = tempfile.gettempdir() + "\\new_app.exe"
+            self.after(0, lambda: self.progress.set(0))
+            self.after(0, lambda: self.status.configure(text="アップデート中..."))
 
-            # ✅ download
-            download_update(data["url"], temp_path)
+            if os.path.exists(temp_path):
+                os.remove(temp_path)
 
-            # ✅ check hash
+            # download
+            download_update(
+                data["url"],
+                temp_path,
+                progress_callback=self.update_progress
+            )
+
+            # verify
             if not verify_file(temp_path, data["sha256"]):
                 raise Exception("ファイル検証に失敗しました")
 
-            # ✅ apply
+            self.after(0, lambda: self.status.configure(text="インストール中..."))
+
+            # ⚠️ IMPORTANT: sẽ exit app tại đây
             apply_update(temp_path)
 
         except Exception as e:
-            messagebox.showerror("エラー", str(e))
+            self.after(0, lambda: messagebox.showerror("エラー", str(e)))
+            self.after(0, lambda: self.progress.set(0))
+            self.after(0, lambda: self.set_ui_state(True))
+            self.is_updating = False
 
-    # ===== File select =====
+    # =========================
+    # 📊 PROGRESS UPDATE
+    # =========================
+    def update_progress(self, value):
+        percent = int(value * 100)
+
+        def update():
+            self.progress.set(value)
+            self.status.configure(text=f"ダウンロード中... {percent}%")
+
+        self.after(0, update)
+
+    # =========================
+    # 📂 SELECT FILE
+    # =========================
     def select_file(self):
+        if self.is_updating:
+            messagebox.showwarning("注意", "アップデート中は操作できません")
+            return
+
         file_path = filedialog.askopenfilename(filetypes=[("Excel", "*.xlsx")])
         if file_path:
             self.run_process(file_path)
 
-    # ===== Drag highlight =====
+    # =========================
+    # 🎯 DRAG UI EFFECT
+    # =========================
     def on_drag_enter(self, event):
-        self.drop_area.configure(fg_color="#BBDEFB")
+        if not self.is_updating:
+            self.drop_area.configure(fg_color="#BBDEFB")
 
     def on_drag_leave(self, event):
         self.drop_area.configure(fg_color="#E3F2FD")
 
-    # ===== Drop handler =====
+    # =========================
+    # 📥 DROP FILE
+    # =========================
     def drop_file(self, event):
-        file_path = event.data.strip("{}")
+        if self.is_updating:
+            messagebox.showwarning("注意", "アップデート中は操作できません")
+            return
 
-        # reset màu
+        file_path = event.data.strip("{}")
         self.drop_area.configure(fg_color="#E3F2FD")
 
-        # ✅ check extension
         if not file_path.lower().endswith(".xlsx"):
             messagebox.showerror("エラー", "Excelファイル(.xlsx)のみ対応しています")
             return
 
         self.run_process(file_path)
 
-    # ===== Main process =====
+    # =========================
+    # ⚙️ MAIN PROCESS
+    # =========================
     def run_process(self, file_path):
-
         filename = os.path.basename(file_path)
 
         self.status.configure(text=f"処理中：{filename}")
         self.progress.set(0.3)
-        self.update_idletasks()
 
         try:
             result = process_file(file_path)
 
             self.progress.set(1)
 
-            # self.status.configure(
-            #     text=(
-            #         f"✅ 完了：{result['removed']}件削除 / 残り{result['remain']}件\n"
-            #         f"📄 {result['output_file']}\n"
-            #         f"📄 {result['log_file']}\n"
-            #     )
-            # )
+            if hasattr(self, "output_label"):
+                self.output_label.destroy()
+
+            if hasattr(self, "log_label"):
+                self.log_label.destroy()
 
             self.status.configure(
                 text=f"✅ 完了：{result['removed']}件削除 / 残り{result['remain']}件"
             )
 
-            # ===== file cleaned =====
+            # file result
             self.output_label = ctk.CTkLabel(
                 self,
                 text=f"📄 {result['output_file']}",
@@ -193,7 +258,7 @@ class App(TkinterDnD.Tk):
                 lambda e, p=result['output_file']: self.open_file(p)
             )
 
-            # ===== file log =====
+            # log file
             self.log_label = ctk.CTkLabel(
                 self,
                 text=f"📄 {result['log_file']}",
@@ -213,21 +278,19 @@ class App(TkinterDnD.Tk):
             messagebox.showerror("エラー", str(e))
             self.progress.set(0)
 
-    # ==== Open file with default app =====
+    # =========================
+    # 📂 OPEN FILE
+    # =========================
     def open_file(self, path):
         try:
-            # ✅ kiểm tra file tồn tại
             if not os.path.exists(path):
                 messagebox.showerror("エラー", "ファイルが存在しません")
                 return
 
-            # ✅ mở file bằng app mặc định (Excel, Notepad...)
             os.startfile(path)
 
         except Exception as e:
             messagebox.showerror("エラー", str(e))
-
-
 
 
 def run():
