@@ -19,6 +19,14 @@ def check_update():
     """
 
     try:
+        
+        fail_flag = os.path.join(tempfile.gettempdir(), "update_failed.flag")
+
+        # ✅ nếu vừa rollback → bỏ qua 1 lần
+        if os.path.exists(fail_flag):
+            os.remove(fail_flag)
+            return False, None
+
         # 🔧 sửa URL API của bạn ở đây
         url = "https://raw.githubusercontent.com/anhpham9/company_cleaner-tool/master/version/version.json"
 
@@ -95,7 +103,6 @@ def apply_update(new_file_path):
     2. Replace file exe
     3. Restart app
     """
-
     
     current_exe = sys.executable
     app_dir = os.path.dirname(current_exe)
@@ -107,50 +114,47 @@ def apply_update(new_file_path):
 
     script = f"""
     @echo off
-    echo === UPDATING WITH ROLLBACK ===
+    echo === SAFE UPDATE WITH ROLLBACK ===
 
-    :: đợi app hiện tại tắt
     timeout /t 2 /nobreak > nul
 
-    :: kill lại cho chắc
     taskkill /f /im "{exe_name}" > nul 2>&1
 
-    :: ===== STEP 1: backup =====
+    :: ===== STEP 1: BACKUP =====
     if exist "{backup_exe}" del "{backup_exe}"
-    rename "{current_exe}" "{exe_name}.bak"
+    copy "{current_exe}" "{backup_exe}" > nul
 
-    :: ===== STEP 2: install new =====
-    rename "{new_file_path}" "{exe_name}"
+    :: ===== STEP 2: INSTALL NEW =====
+    copy /Y "{new_file_path}" "{current_exe}" > nul
 
-    :: ===== STEP 3: start new app =====
+    :: verify copy success
+    if not exist "{current_exe}" (
+        echo COPY FAILED → ROLLBACK
+        goto rollback
+    )
+
+    :: ===== STEP 3: START NEW APP =====
     start "" "{current_exe}"
 
-    :: ===== STEP 4: check if app started =====
     timeout /t 5 /nobreak > nul
 
     tasklist | find /i "{exe_name}" > nul
-
     if errorlevel 1 (
-        echo NEW VERSION FAILED → ROLLBACK
-
-        :: kill nếu có process lỗi
-        taskkill /f /im "{exe_name}" > nul 2>&1
-
-        :: xóa file lỗi
-        del "{current_exe}"
-
-        :: restore backup
-        rename "{backup_exe}" "{exe_name}"
-
-        :: chạy lại bản cũ
-        start "" "{current_exe}"
-    ) else (
-        echo UPDATE SUCCESS
-        :: xóa backup
-        del "{backup_exe}"
+        echo APP FAILED → ROLLBACK
+        goto rollback
     )
 
-    :: cleanup
+    echo UPDATE SUCCESS
+    del "{backup_exe}"
+    goto end
+
+    :rollback
+    echo fail > "%temp%\update_failed.flag"
+    taskkill /f /im "{exe_name}" > nul 2>&1
+    copy /Y "{backup_exe}" "{current_exe}" > nul
+    start "" "{current_exe}"
+
+    :end
     del "%~f0"
     """
 
