@@ -175,14 +175,16 @@ pyinstaller --onefile --noconsole --clean --icon=assets/icon.ico main.py --versi
 ### 🎯 FLOW 
 
 ```
-1. bump_version.py
-2. git push
+# if ver 1.1, 1.4, 2.8,...
+1. py bump_version.py
+2. git add .
+3. git commit -m "release 2.1"
+4. git push
 
-#
-python bump_version.py
-git add .
-git commit -m "release 2.1"
-git push
+# if ver 1.0, 2.0, 3.0
+1. git add .
+2. git commit -m "release 2.1"
+3. git push
 ```
 
 GitHub sẽ:

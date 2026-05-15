@@ -24,53 +24,11 @@ jobs:
       
       # ===== inject version into app =====
       - name: Inject version into app
-        run: |
-          python - <<EOF
-          import json
-
-          with open("version/version.json", "r", encoding="utf-8") as f:
-              v = json.load(f)["version"]
-
-          with open("app_version.py", "w") as f:
-              f.write(f'APP_VERSION = "{v}"')
-          EOF
+        run: python scripts/inject_version.py
 
       # ===== generate version info for exe =====
       - name: Generate version info for exe
-        run: |
-          python - <<EOF
-          import json
-
-          v = json.load(open("version/version.json"))["version"]
-          major, minor = v.split(".")
-
-          content = f'''
-            VSVersionInfo(
-              ffi=FixedFileInfo(
-                filevers=({major},{minor},0,0),
-                prodvers=({major},{minor},0,0),
-                mask=0x3f,
-                flags=0x0,
-                OS=0x4,
-                fileType=0x1,
-                subtype=0x0,
-                date=(0, 0)
-              ),
-              kids=[
-                StringFileInfo([
-                  StringTable(
-                    u'040904B0',
-                    [
-                      StringStruct(u'ProductName', u'Company Cleaner'),
-                      StringStruct(u'FileVersion', u'{v}'),
-                      StringStruct(u'ProductVersion', u'{v}')
-                    ])
-                ])
-              ]
-            )
-          '''
-          open("version.txt", "w").write(content)
-          EOF
+        run: python scripts/generate_version.py
 
       # ===== build exe =====
       - run: pyinstaller --onefile --noconsole main.py
@@ -82,7 +40,7 @@ jobs:
       - name: Read version
         shell: pwsh
         run: |
-          $version = python -c "import json; print(json.load(open('version/version.json'))['version'])"
+          $version = python scripts/read_version.py
           echo "VERSION=$version" >> $env:GITHUB_ENV
 
       # ===== create release FIRST =====
@@ -100,21 +58,8 @@ jobs:
         run: python generate_metadata.py
 
       # ===== update URL AFTER release =====
-      - name: Update version.json
-        run: |
-          python - <<EOF
-          import json
-
-          file = "version/version.json"
-
-          with open(file, "r", encoding="utf-8") as f:
-              data = json.load(f)
-
-          data["url"] = f"https://github.com/anhpham9/company_cleaner-tool/releases/download/v{data['version']}/CompanyCleaner.exe"
-
-          with open(file, "w", encoding="utf-8") as f:
-              json.dump(data, f, ensure_ascii=False, indent=2)
-          EOF
+      - name: Update URL in version.json
+        run: python scripts/update_url_after_release.py
 
       # ===== commit version.json =====
       - name: Commit version.json
@@ -122,5 +67,5 @@ jobs:
           git config user.name "github-actions"
           git config user.email "actions@github.com"
           git add version/version.json
-          git commit -m "update version metadata" || echo "No changes"
+          git commit -m "update metadata [skip ci]" || echo "No changes"
           git push
