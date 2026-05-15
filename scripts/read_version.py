@@ -3,5 +3,8 @@ import os
 
 v = json.load(open("version/version.json"))["version"]
 
-# export env cho GitHub Actions
-print(f"::set-env name=VERSION::{v}")
+# ghi vào GitHub env
+with open(os.environ["GITHUB_ENV"], "a") as f:
+    f.write(f"VERSION={v}\n")
+
+print("Version:", v)
