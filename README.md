@@ -2,6 +2,8 @@
 
 社内向けに開発されたツールで、Excelの企業リストを整理・クリーニングします。
 
+![CompanyCleaner](image-2.png)
+
 ---
 
 ## 📌 機能概要
@@ -126,6 +128,10 @@ blacklist.xlsx が存在しない場合
   → 「詳細情報」→「実行」を選択してください  
 
 - Excelファイルは `.xlsx` のみ対応
+
+![Windowsの警告](image.png)
+
+![詳細情報](image-1.png)
 
 ---
 
