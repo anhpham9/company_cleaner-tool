@@ -31,7 +31,13 @@ jobs:
         run: python scripts/generate_version.py
 
       # ===== build exe =====
-      - run: pyinstaller --onefile --noconsole --clean --icon=assets/icon.ico main.py --version-file version.txt
+      - name: Build exe
+        run: |
+            pyinstaller --onefile --noconsole --clean `
+            --icon="./assets/icon.ico" `
+            --version-file "./version.txt" `
+            main.py
+
 
       # ===== rename exe =====
       - run: mv dist/main.exe dist/CompanyCleaner.exe
