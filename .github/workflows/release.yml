@@ -38,10 +38,7 @@ jobs:
 
       # ===== read version =====
       - name: Read version
-        shell: pwsh
-        run: |
-          $version = python scripts/read_version.py
-          echo "VERSION=$version" >> $env:GITHUB_ENV
+        run: python scripts/read_version.py
 
       # ===== create release FIRST =====
       - name: Create Release
