@@ -3,9 +3,10 @@ import os
 import subprocess
 import sys
 import hashlib
+from app_version import APP_VERSION
 
 
-CURRENT_VERSION = "1.0"
+CURRENT_VERSION = APP_VERSION
 
 def verify_file(path, expected_hash):
     sha256 = hashlib.sha256()

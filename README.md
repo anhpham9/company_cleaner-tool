@@ -151,7 +151,7 @@ blacklist.xlsx が存在しない場合
 
 ```bash
 pip install pyinstaller customtkinter tkinterdnd2 pandas openpyxl requests
-pyinstaller --onefile --noconsole --clean --icon=assets/icon.ico main.py
+pyinstaller --onefile --noconsole --clean --icon=assets/icon.ico main.py --version-file version.txt
 ```
 
 ---
@@ -170,3 +170,39 @@ pyinstaller --onefile --noconsole --clean --icon=assets/icon.ico main.py
 
 不具合・改善要望があれば連絡してください。
 
+---
+
+### 🎯 FLOW 
+
+```
+1. bump_version.py
+2. git push
+
+#
+python bump_version.py
+git add .
+git commit -m "release 2.1"
+git push
+```
+
+GitHub sẽ:
+
+```
+→ detect change version.json
+→ build exe
+→ create release
+→ upload exe
+→ generate hash + size
+→ update version.json
+→ commit lại
+```
+
+App user sẽ:
+
+```
+→ check version.json
+→ thấy version mới
+→ download exe
+→ verify hash
+→ update
+```

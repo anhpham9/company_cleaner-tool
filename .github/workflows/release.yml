@@ -2,6 +2,9 @@ name: Build & Release
 
 on:
   workflow_dispatch:
+  push:
+    paths:
+      - "version/version.json"
 
 permissions:
   contents: write
@@ -11,31 +14,69 @@ jobs:
     runs-on: windows-latest
 
     steps:
-      # ===== checkout =====
-      - name: Checkout source
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      # ===== setup python =====
-      - name: Setup Python
-        uses: actions/setup-python@v5
+      - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
-      # ===== install packages =====
-      - name: Install dependencies
+      - run: pip install pandas openpyxl customtkinter pyinstaller tkinterdnd2 requests
+      
+      # ===== inject version into app =====
+      - name: Inject version into app
         run: |
-          pip install pandas openpyxl customtkinter pyinstaller tkinterdnd2 requests
+          python - <<EOF
+          import json
+
+          with open("version/version.json", "r", encoding="utf-8") as f:
+              v = json.load(f)["version"]
+
+          with open("app_version.py", "w") as f:
+              f.write(f'APP_VERSION = "{v}"')
+          EOF
+
+      # ===== generate version info for exe =====
+      - name: Generate version info for exe
+        run: |
+          python - <<EOF
+          import json
+
+          v = json.load(open("version/version.json"))["version"]
+          major, minor = v.split(".")
+
+          content = f'''
+            VSVersionInfo(
+              ffi=FixedFileInfo(
+                filevers=({major},{minor},0,0),
+                prodvers=({major},{minor},0,0),
+                mask=0x3f,
+                flags=0x0,
+                OS=0x4,
+                fileType=0x1,
+                subtype=0x0,
+                date=(0, 0)
+              ),
+              kids=[
+                StringFileInfo([
+                  StringTable(
+                    u'040904B0',
+                    [
+                      StringStruct(u'ProductName', u'Company Cleaner'),
+                      StringStruct(u'FileVersion', u'{v}'),
+                      StringStruct(u'ProductVersion', u'{v}')
+                    ])
+                ])
+              ]
+            )
+          '''
+          open("version.txt", "w").write(content)
+          EOF
 
       # ===== build exe =====
-      - name: Build exe
-        run: |
-          pyinstaller --onefile --noconsole main.py
+      - run: pyinstaller --onefile --noconsole main.py
 
       # ===== rename exe =====
-      - name: Rename exe
-        shell: pwsh
-        run: |
-          Rename-Item dist/main.exe CompanyCleaner.exe
+      - run: mv dist/main.exe dist/CompanyCleaner.exe
 
       # ===== read version =====
       - name: Read version
@@ -44,44 +85,7 @@ jobs:
           $version = python -c "import json; print(json.load(open('version/version.json'))['version'])"
           echo "VERSION=$version" >> $env:GITHUB_ENV
 
-      # ===== generate metadata =====
-      - name: Generate SHA256 and size
-        run: |
-          python generate_metadata.py
-
-      # ===== update download url =====
-      - name: Update version.json URL
-        shell: pwsh
-        run: |
-          python -c "
-            import json
-
-            file = 'version/version.json'
-
-            with open(file, 'r', encoding='utf-8') as f:
-                data = json.load(f)
-
-            data['url'] = f'https://github.com/anhpham9/company_cleaner-tool/releases/download/v{data[\"version\"]}/CompanyCleaner.exe'
-
-            with open(file, 'w', encoding='utf-8') as f:
-                json.dump(data, f, ensure_ascii=False, indent=2)
-          "
-
-      # ===== commit version.json =====
-      - name: Commit version.json
-        shell: pwsh
-        run: |
-          git config user.name "github-actions"
-          git config user.email "actions@github.com"
-
-          git add version/version.json
-
-          git commit -m "update version metadata" `
-          || echo "No changes"
-
-          git push
-
-      # ===== create github release =====
+      # ===== create release FIRST =====
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
@@ -90,3 +94,33 @@ jobs:
           files: dist/CompanyCleaner.exe
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # ===== generate metadata =====
+      - name: Generate SHA256 and size
+        run: python generate_metadata.py
+
+      # ===== update URL AFTER release =====
+      - name: Update version.json
+        run: |
+          python - <<EOF
+          import json
+
+          file = "version/version.json"
+
+          with open(file, "r", encoding="utf-8") as f:
+              data = json.load(f)
+
+          data["url"] = f"https://github.com/anhpham9/company_cleaner-tool/releases/download/v{data['version']}/CompanyCleaner.exe"
+
+          with open(file, "w", encoding="utf-8") as f:
+              json.dump(data, f, ensure_ascii=False, indent=2)
+          EOF
+
+      # ===== commit version.json =====
+      - name: Commit version.json
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add version/version.json
+          git commit -m "update version metadata" || echo "No changes"
+          git push

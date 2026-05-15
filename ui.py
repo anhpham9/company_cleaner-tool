@@ -9,6 +9,7 @@ import os
 from updater import check_update, download_update, apply_update, verify_file
 from processor import process_file
 from logger import log_action
+from app_version import APP_VERSION
 
 ctk.set_appearance_mode("light")
 ctk.set_default_color_theme("blue")
@@ -20,7 +21,7 @@ class App(TkinterDnD.Tk):
 
         self.after(1000, self.check_update_ui)
 
-        self.title("企業リストクリーナー")
+        self.title(f"企業リストクリーナー - Version: {APP_VERSION}")
         self.geometry("620x420")
 
         self.configure(bg="#F5F7FA")
