@@ -269,10 +269,13 @@ Công cụ hỗ trợ tự động cập nhật phiên bản.
 ```bash
 pip install pyinstaller customtkinter tkinterdnd2 pandas openpyxl requests pillow
 
-pyinstaller --onefile --noconsole --clean ^
-  --icon=assets/icon.ico ^
-  main.py ^
-  --version-file version.txt
+pyinstaller --onefile ^
+--noconsole ^
+--hidden-import=updater ^
+--hidden-import=processor ^
+--hidden-import=logger ^
+--hidden-import=app_version ^
+--clean --icon=assets/icon.ico main.py
 ```
 
 ---

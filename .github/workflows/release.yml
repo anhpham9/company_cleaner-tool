@@ -33,10 +33,14 @@ jobs:
       # ===== build exe =====
       - name: Build exe
         run: |
-            pyinstaller --onefile --noconsole --clean `
-            --icon="./assets/icon.ico" `
-            --version-file "./version.txt" `
-            main.py
+          pyinstaller --onefile --noconsole --clean `
+          --hidden-import=updater `
+          --hidden-import=processor `
+          --hidden-import=logger `
+          --hidden-import=app_version `
+          --icon="./assets/icon.ico" `
+          --version-file "./version.txt" `
+          main.py
 
 
       # ===== rename exe =====
@@ -48,7 +52,7 @@ jobs:
 
       # ===== create release FIRST =====
       - name: Create Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ env.VERSION }}
           name: CompanyCleaner v${{ env.VERSION }}

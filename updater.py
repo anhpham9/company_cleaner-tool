@@ -1,5 +1,3 @@
-
-
 import requests
 import hashlib
 import os
@@ -103,58 +101,84 @@ def apply_update(new_file_path):
     2. Replace file exe
     3. Restart app
     """
+
+    import sys
+    import os
+    import tempfile
+    import subprocess
+
     
-    current_exe = sys.executable
+    def get_real_exe_path():
+            if getattr(sys, 'frozen', False):
+                return sys.executable
+            return os.path.abspath(sys.argv[0])
+
+    
+    current_exe = get_real_exe_path()
     app_dir = os.path.dirname(current_exe)
     exe_name = os.path.basename(current_exe)
 
     backup_exe = os.path.join(app_dir, exe_name + ".bak")
+    bat_path = os.path.join(os.environ["TEMP"], "update_script.bat")
 
-    bat_path = os.path.join(tempfile.gettempdir(), "update_script.bat")
-
-    script = f"""
+    script = rf"""
     @echo off
-    echo === SAFE UPDATE WITH ROLLBACK ===
+
+    set LOGFILE=%temp%\update_log.txt
+    echo ==== START UPDATE ==== >> %LOGFILE%
 
     timeout /t 2 /nobreak > nul
 
+    echo Killing old process >> %LOGFILE%
     taskkill /f /im "{exe_name}" > nul 2>&1
 
+    :: ===== CHECK NEW FILE =====
+    if not exist "{new_file_path}" (
+        echo NEW FILE NOT FOUND >> %LOGFILE%
+        goto rollback
+    )
+
     :: ===== STEP 1: BACKUP =====
+    echo Backup exe >> %LOGFILE%
     if exist "{backup_exe}" del "{backup_exe}"
     copy "{current_exe}" "{backup_exe}" > nul
 
     :: ===== STEP 2: INSTALL NEW =====
+    echo Copy new exe >> %LOGFILE%
     copy /Y "{new_file_path}" "{current_exe}" > nul
 
-    :: verify copy success
     if not exist "{current_exe}" (
-        echo COPY FAILED → ROLLBACK
+        echo COPY FAILED >> %LOGFILE%
         goto rollback
     )
 
     :: ===== STEP 3: START NEW APP =====
+    echo Start new exe >> %LOGFILE%
     start "" "{current_exe}"
 
     timeout /t 5 /nobreak > nul
 
     tasklist | find /i "{exe_name}" > nul
     if errorlevel 1 (
-        echo APP FAILED → ROLLBACK
+        echo APP FAILED → ROLLBACK >> %LOGFILE%
         goto rollback
     )
 
-    echo UPDATE SUCCESS
+    echo UPDATE SUCCESS >> %LOGFILE%
     del "{backup_exe}"
     goto end
 
     :rollback
     echo fail > "%temp%\update_failed.flag"
+    echo ROLLBACK >> %LOGFILE%
+
     taskkill /f /im "{exe_name}" > nul 2>&1
     copy /Y "{backup_exe}" "{current_exe}" > nul
+
     start "" "{current_exe}"
 
     :end
+    echo DONE >> %LOGFILE%
     del "%~f0"
     """
 
@@ -162,8 +186,12 @@ def apply_update(new_file_path):
         f.write(script)
 
     subprocess.Popen(
-        ["cmd", "/c", bat_path],
-        creationflags=subprocess.CREATE_NO_WINDOW
+        # show cmd window for debugging
+        ["cmd", "/k", bat_path]
+
+        # change to "/c" and add CREATE_NO_WINDOW for silent mode in production
+        # ["cmd", "/c", bat_path],
+        # creationflags=subprocess.CREATE_NO_WINDOW
     )
 
     sys.exit(0)
